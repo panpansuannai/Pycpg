@@ -27,6 +27,15 @@ class HasBody(object):
         ◎------>
         ^
         ```anchor```
+    
+      -------
+     |  xxx  |--------◎  <---- ```anchor```
+      -------         |
+      -------         |
+     |  xxx  |<-------◎  <---- ```anchor```
+      ------- 
+         ^
+         |___________ ```HasBody and has anchor```
 '''
 class LinkedStruct(GraphAttrs):
     def __init__(self):
@@ -46,7 +55,7 @@ class BodyStruct(HasBody):
     def __init__(self, body):
         HasBody.__init__(self, body)
 
-''' A structure container that hold may structures '''
+''' A structure container that hold many structures '''
 class StructsBlock(object):
     def __init__(self):
         self._structs = []
@@ -73,11 +82,12 @@ class WhileStruct(LinkedStruct):
         self._condition = condition
 
 @singleton
-class START(LinkedStruct):
+class START(LinkedStruct, BodyStruct):
     def __init__(self):
-        pass
+        BodyStruct.__init__(self, 'Start')
+        LinkedStruct.__init__(self)
     
 @singleton
-class END(LinkedStruct):
+class END(BodyStruct):
     def __init__(self):
-        pass
+        BodyStruct.__init__(self, 'End')
