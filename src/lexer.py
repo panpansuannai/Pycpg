@@ -21,7 +21,7 @@ tokens = [
     'STRING'
 ] + list(reversed.values())
 
-t_OP = r'\+|-|\*|\%|/|=|\&|\||\^|\'|\"|~|`|\!|\#|\$'
+t_OP = r'\+|-|\*|\%|/|=|\&|\||\^|\'|\"|~|`|\!|\#|\$|>|<'
 t_SEMI = r';'
 t_IF = r'if'
 t_WHILE = r'while'
