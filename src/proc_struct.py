@@ -66,20 +66,40 @@ class StructsBlock(object):
 class IfStructBody(object):
     def __init__(self, block: StructsBlock):
         self._block = block
+    @property
+    def block(self):
+        return self._block
 
 class IfStruct(LinkedStruct):
     def __init__(self, condition: LinkedStruct, yes_block: IfStructBody):
         self._condition = condition
         self._yes_block = yes_block
+    @property
+    def condition(self):
+        return self._condition
+    @property
+    def yes_block(self):
+        return self._yes_block.block
 
 class WhileStructBody(object):
     def __init__(self, block: StructsBlock):
         self._block = block
+    @property
+    def block(self):
+        return self._block
 
 class WhileStruct(LinkedStruct):
     def __init__(self, condition: LinkedStruct, loop_block: WhileStructBody):
         super().__init__()
         self._condition = condition
+        self._loop_body = loop_block
+
+    @property
+    def condition(self):
+        return self._condition
+    @property
+    def loop_block(self):
+        return self._loop_body.block
 
 @singleton
 class START(LinkedStruct, BodyStruct):
