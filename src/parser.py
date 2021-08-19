@@ -2,10 +2,6 @@ import ply.yacc as yacc
 from lexer import tokens, lexer
 from proc_struct import  *
 
-def test():
-    test_condition = __name__ == '__main__'
-    return test_condition
-
 ''' Which rule to start with'''
 start = 'Unit'
 
@@ -60,13 +56,15 @@ def p_stmt_list(p):
 
 def p_error(p):
     print("Parser Error")
-    if not test():
+    if not test_mode():
         exit(0)
 
 parser = yacc.yacc(write_tables=False,debug=None)
 
-''' Run Test'''
-if test():
+def test_mode():
+    test_condition = __name__ == '__main__'
+    return test_condition
+def test_main():
     test_case_str = ('if (~`!#$%^&*2167djia jdfia) { jdiofa; jidfa; jodfa;}',
     'while(dfjiao(djfio3902++f) **dfjai) { jdoa; *&*#; ++; }')
     for s in test_case_str:
@@ -82,3 +80,7 @@ if test():
             continue
         result = parser.parse(s, lexer=lexer)
         print(result)
+
+''' Run Test'''
+if test_mode():
+    test_main()
