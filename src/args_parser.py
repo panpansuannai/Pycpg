@@ -64,3 +64,4 @@ def parse() -> Config :
     output_type = first_of_list_or_default(namespace['type'], 'svg')
 
     return Config(input_file, output_file, output_type)
+

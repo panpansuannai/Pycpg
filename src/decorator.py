@@ -6,3 +6,4 @@ def singleton(cls):
         return _instance[cls]
     
     return inner
+

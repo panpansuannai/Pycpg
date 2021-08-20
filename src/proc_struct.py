@@ -121,3 +121,4 @@ class START(LinkedStruct, BodyStruct):
 class END(BodyStruct):
     def __init__(self):
         BodyStruct.__init__(self, 'End')
+
