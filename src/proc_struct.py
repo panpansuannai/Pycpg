@@ -22,6 +22,10 @@ class HasBody(object):
     def merge_body(self, other):
         self._body = self._body + ' ' + other._body
 
+    @property
+    def body(self):
+        return self._body
+
 ''' Struct with a anchor point can link to other struct,
     for example:
         ◎------>
@@ -62,6 +66,12 @@ class StructsBlock(object):
 
     def add_struct(self, struct):
         self._structs.append(struct)
+
+    def size(self):
+        return len(self._structs)
+
+    def __iter__(self):
+        return self._structs.__iter__()
 
 class IfStructBody(object):
     def __init__(self, block: StructsBlock):
