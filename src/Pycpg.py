@@ -3,6 +3,7 @@ from sys import stdin
 from args_parser import parse as args_parse, Config
 from lexer import lexer
 from parser import parser
+from proc_anchor import GenAnchorGraph
 
 def read_code_text(io_in: TextIOWrapper) -> str:
     return io_in.read()
@@ -16,7 +17,7 @@ def main():
 
     if config.input_file is None:
         '''Get input from standard input'''
-        struts = parser.parse(read_code_text(stdin), lexer=lexer)
+        structs = parser.parse(read_code_text(stdin), lexer=lexer)
     else :
         try:
             with open(config.input_file, 'rt') as file:
@@ -31,6 +32,9 @@ def main():
         except :
             exit_with_str(0, "{}: Open file error.".format(config.input_file))
             return
+    anchors = GenAnchorGraph.generate(structs)
+    print(anchors)
     
 if __name__ == '__main__':
     main()
+
