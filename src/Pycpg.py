@@ -4,6 +4,7 @@ from args_parser import parse as args_parse, Config
 from lexer import lexer
 from parser import parser
 from proc_anchor import GenAnchorGraph
+from proc_graph import GenProceduralGraph
 
 def read_code_text(io_in: TextIOWrapper) -> str:
     return io_in.read()
@@ -33,7 +34,8 @@ def main():
             exit_with_str(0, "{}: Open file error.".format(config.input_file))
             return
     anchors = GenAnchorGraph.generate(structs)
-    print(anchors)
+    GenProceduralGraph.generate(anchors)
+    GenProceduralGraph.render(config)
     
 if __name__ == '__main__':
     main()

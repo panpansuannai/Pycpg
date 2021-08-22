@@ -36,6 +36,15 @@ class Config(object):
     def output_type(self) -> str:
         return self._output_type
 
+    def split_file_name(self, file_name: str) -> tuple[str, str]:
+        lst = file_name.split('.', maxsplit=1)
+        if len(lst) <= 1:
+            return (file_name, None)
+        return (lst[0], [1])
+
+    def split_output_file(self):
+        return self.split_file_name(self._output_file)
+
 def first_of_list_or_default(lst: list, default):
     if lst is not None and len(lst) > 0:
         return lst[0]

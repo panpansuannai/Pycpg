@@ -1,5 +1,5 @@
-from proc_struct import *
-import graphviz
+from proc_struct import (IfStruct, WhileStruct, BodyStruct, StructsBlock,
+                         IfStructBody, WhileStructBody)
 
 class Position(object):
     def __init__(self, x, y):
@@ -34,6 +34,9 @@ class OneLink(object):
     def link_to(self, other):
         self._next = other
 
+    def link_size(self):
+        return 1
+
     @classmethod
     def test(cls):
         link = OneLink()
@@ -52,6 +55,10 @@ class MultiLink(object):
 
     def link_to(self, other):
         self._next.append(other)
+    
+    def link_size(self):
+        return len(self._next)
+
     @classmethod
     def test(cls):
         link = MultiLink()
@@ -72,6 +79,7 @@ class AnchorGraph(object):
         self._anchors = [[None for i in range(colum)] for j in range(rows)]
         self._in = anchor_in.copy()
         self._out = anchor_out.copy()
+        self._nexts = []
 
     @property
     def rows(self):
@@ -87,11 +95,15 @@ class AnchorGraph(object):
     def anchor_out(self):
         ''' Return the output anchor of a AnchorGraph '''
         return self.positional_get(self._out).anchor_out()
+
+    @property
+    def nexts(self):
+        return self._nexts
     
     def overall_link(self, next):
-        if not isinstance(next, AnchorGraph):
-            raise ValueError("AnchorGraph only supported to link AnchorGraph")
-        self.anchor_out().overall_link(next.anchor_in())
+        if next is None:
+            raise ValueError("AnchorGraph can't link to None")
+        self._nexts.append(next)
 
     def positional_link(self, from_pos: Position, to_pos: Position):
         if (self.positional_get(from_pos) is None 
@@ -100,6 +112,7 @@ class AnchorGraph(object):
         self.positional_get(from_pos).overall_link(self.positional_get(to_pos))
 
     def serial_link(self, lst: list):
+        # print(list(map(lambda x: x.y, lst)))
         last_pos = None
         for i in lst:
             if last_pos is not None:
@@ -121,28 +134,29 @@ class AnchorGraph(object):
         graph = AnchorGraph(3, 3, Position(0, 0), Position(0, 2))
         assert graph.colum == 3
         assert graph.rows == 3
+        # Test serial_set and anchor_in and anchor_out
         graph.serial_set([Anchor("({}, {})".format(j, i)) for i in range(3) for j in range(3)])
         assert graph.anchor_in() == graph.positional_get(Position(0, 0))
         assert graph.anchor_out() == graph.positional_get(Position(0, 2))
+        # Test positional_get
         assert graph.positional_get(Position(0, 0)).body == "(0, 0)"
         assert graph.positional_get(Position(2, 2)).body == "(2, 2)"
-        graph.positional_link(Position(0, 0),Position(0, 1))
-        assert graph.positional_get(Position(0, 0)).next() == graph.positional_get(Position(0, 1))
+        # Test positional_link
+        graph.positional_link(Position(0, 0), Position(0, 1))
+        assert graph.positional_get(Position(0, 0)).nexts[0] == graph.positional_get(Position(0, 1))
+        # Test serial_link
+        graph.serial_link([Position(0, 1), Position(0, 2), Position(1, 2)])
+        assert graph.positional_get(Position(0, 1)).nexts[0] == graph.positional_get(Position(0, 2))
+        assert graph.positional_get(Position(0, 2)).nexts[0] == graph.positional_get(Position(1, 2))
 
 class Anchor(AnchorGraph):
-    def __init__(self, body, link=OneLink()):
+    def __init__(self, body):
         AnchorGraph.__init__(self, 1,1,Position(0,0), Position(0,0))
-        self._link = link
         self._body = body
 
     @property
     def body(self):
         return self._body
-
-    def overall_link(self, other):
-        if not isinstance(other, Anchor) and not isinstance(other, AnchorGraph):
-            raise ValueError("Anchor only supported to link to Anchor or AnchorGraph")
-        self._link.link_to(other.anchor_in)
 
     def anchor_in(self):
         ''' Return the input anchor of an Anchor,
@@ -153,14 +167,6 @@ class Anchor(AnchorGraph):
         ''' Return the output anchor of an Anchor,
             that is itself '''
         return self
-    def next(self):
-        if not isinstance(self._link, OneLink):
-            raise ValueError("next can only be called while self._link is OneLink")
-        return self._link.next()
-    def nexts(self):
-        if not isinstance(self._link, MultiLink):
-            raise ValueError("nexts can only be called while self._link is MultiLink")
-        return self._link.nexts()
 
     @classmethod
     def test(cls):
@@ -170,7 +176,7 @@ class Anchor(AnchorGraph):
         assert anchor.anchor_out() is anchor
         other = Anchor("other")
         anchor.overall_link(other)
-        assert anchor.next() == other
+        assert anchor.nexts[0] == other
 
 class GenAnchorGraph(object):
     @classmethod
@@ -189,9 +195,9 @@ class GenAnchorGraph(object):
     @classmethod
     def genrate_block_anchors(cls, block: StructsBlock) -> AnchorGraph:
         rows, colum = (block.size(), 1)
-        anchors = AnchorGraph(rows, colum, Position(0, 0), Position(0, colum - 1))
+        anchors = AnchorGraph(rows, colum, Position(0, 0), Position(0, rows - 1))
         anchors.serial_set([GenAnchorGraph.generate(struct) for struct in block])
-        anchors.serial_link([Position(0, i) for i in range(colum)])
+        anchors.serial_link([Position(0, i) for i in range(rows)])
         return anchors
 
     @classmethod
@@ -213,7 +219,7 @@ class GenAnchorGraph(object):
         '''
         rows, colum = (4, 3)
         anchors = AnchorGraph(rows, colum, Position(1, 0), Position(1, 3))
-        lst = [Anchor(None), Anchor(wstruct.condition.body, MultiLink()), Anchor(None),
+        lst = [Anchor(None), Anchor(wstruct.condition.body), Anchor(None),
                None, GenAnchorGraph.generate(wstruct.loop_block), None,
                Anchor(None), Anchor(None), None,
                None, Anchor(None), Anchor(None)]
@@ -238,7 +244,7 @@ class GenAnchorGraph(object):
         '''
         rows, colum = (3, 2)
         anchors = AnchorGraph(rows, colum, Position(0, 0), Position(0, 2))
-        lst = [Anchor(ifstruct.condition.body, MultiLink()), Anchor(None),
+        lst = [Anchor(ifstruct.condition.body), Anchor(None),
                None, GenAnchorGraph.generate(ifstruct.yes_block),
                Anchor(None), Anchor(None)]
         anchors.serial_set(lst)
@@ -282,6 +288,9 @@ class GenAnchorGraph(object):
         assert graph.positional_get(Position(0, 0)).body == "Condition"
         assert graph.anchor_in().body == "Condition"
         assert graph.anchor_out() is graph.positional_get(Position(0, 2))
+        assert graph.positional_get(Position(1, 2)).body is None
+        assert graph.positional_get(Position(0, 2)).body is None
+        assert graph.positional_get(Position(0, 2)) is not graph.positional_get(Position(1, 2))
 
     @classmethod
     def test_while(cls):
@@ -313,6 +322,8 @@ class GenAnchorGraph(object):
         graph = cls.generate(block)
         assert isinstance(graph, AnchorGraph)
         assert graph.positional_get(Position(0, 0)) is graph.anchor_in()
+        assert graph.positional_get(Position(0, 2)).body == "third"
+        assert graph.positional_get(Position(0, 0)).nexts[0] is graph.positional_get(Position(0, 1))
 
 
 def test_mode():
